@@ -363,7 +363,7 @@ gamm4.oldwork <- function(G,mf,n.sr,r.name,family,formula,gam.terms,pTerms,lme4.
 
 gamm4 <- function(formula,random=NULL,family=gaussian(),data=list(),weights=NULL,
       subset=NULL,na.action,knots=NULL,drop.unused.levels=TRUE,REML=TRUE,
-      control=NULL,start=NULL,verbose=0L,...) {
+      control=NULL,start=NULL,verbose=0L,nAGQ=1L,...) {
 # Routine to fit a GAMM to some data. Fixed and smooth terms are defined in the formula, but the wiggly 
 # parts of the smooth terms are treated as random effects. The onesided formula random defines additional 
 # random terms. 
@@ -385,7 +385,7 @@ gamm4 <- function(formula,random=NULL,family=gaussian(),data=list(),weights=NULL
  
   mf$formula <- gp$fake.formula
   mf$REML <- mf$verbose <- mf$control <- mf$start <- mf$family <- mf$scale <-
-             mf$knots <- mf$random <- mf$... <-NULL ## mf$weights?
+             mf$knots <- mf$random <- mf$nAGQ <- mf$... <-NULL ## mf$weights?
   mf$drop.unused.levels <- drop.unused.levels
   mf[[1]] <- as.name("model.frame")
   pmf <- mf
@@ -491,7 +491,7 @@ gamm4 <- function(formula,random=NULL,family=gaussian(),data=list(),weights=NULL
   #arg <- list(...)
   #arg <- arg[!(names(arg) %in% names(b))]
   #b <- c(b,arg) ## add '...' arguments for use with do.call
-  b$control <- control; b$verbose=verbose; b$start=start
+  b$control <- control; b$verbose=verbose; b$start=start; b$nAGQ=nAGQ
   if (linear) {
     ## Create the deviance function to be optimized:
     devfun <- do.call(mkLmerDevfun, b)
@@ -503,11 +503,13 @@ gamm4 <- function(formula,random=NULL,family=gaussian(),data=list(),weights=NULL
     ## Create the deviance function for optimizing over theta:
     devfun <- do.call(mkGlmerDevfun, b)
     ## Optimize over theta using a rough approximation (i.e. nAGQ = 0):
-    opt <- optimizeGlmer(devfun,start=start,verbose=verbose,control=control$optCtrl)
-    ## Update the deviance function for optimizing over theta and beta:
-    devfun <- updateGlmerDevfun(devfun, b$reTrms)
-    ## Optimize over theta and beta:
-    opt <- optimizeGlmer(devfun, stage=2,start=start,verbose=verbose,control=control$optCtrl)
+    opt <- optimizeGlmer(devfun,start=start,verbose=verbose,control=control$optCtrl, nAGQ = nAGQ)
+    if (nAGQ != 0) {
+      ## Update the deviance function for optimizing over theta and beta:
+      devfun <- updateGlmerDevfun(devfun, b$reTrms, nAGQ = nAGQ)
+      ## Optimize over theta and beta:
+      opt <- optimizeGlmer(devfun, stage=2,start=start,verbose=verbose,control=control$optCtrl, nAGQ = nAGQ)
+    }
     ## Package up the results:
     ret$mer <- mkMerMod(environment(devfun), opt, b$reTrms, fr = b$fr)
   }
