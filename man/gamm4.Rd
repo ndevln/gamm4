@@ -33,7 +33,7 @@ To use this function effectively it helps to be quite familiar with the use of
 \usage{
 gamm4(formula,random=NULL,family=gaussian(),data=list(),weights=NULL,
       subset=NULL,na.action,knots=NULL,drop.unused.levels=TRUE,
-      REML=TRUE,control=NULL,start=NULL,verbose=0L,...)
+      REML=TRUE,control=NULL,start=NULL,verbose=0L,nAGQ=1L,...)
 }
 
 \arguments{ 
@@ -77,6 +77,9 @@ involving factor variables you might want to turn this off. Only do so if you kn
 \item{start}{starting value list as used by \code{\link{lmer}} or \code{\link{glmer}}.}
 
 \item{verbose}{passed on to fitting \code{lme4} fitting routines.}
+
+\item{nAGQ}{number of Gauss-Hermite quadrature points, as in \code{\link[lme4]{glmer}}; see there for
+details.}
 
 \item{...}{further arguments for passing on to model setup routines.} 
 }
